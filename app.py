@@ -2,6 +2,15 @@ import numpy as np
 from flask import Flask,request,jsonify,render_template,url_for
 import pickle
 import pandas as pd
+import re
+import nltk #For Stop Words i.e the,a,an
+nltk.download('stopwords')
+nltk.download('punkt')
+from nltk.corpus import stopwords
+from nltk.stem.porter import PorterStemmer #to remove conjucation to make all words in present
+from nltk.tokenize import word_tokenize, sent_tokenize
+import heapq  
+corpus = []
 
 df = pd.read_csv('Restaurant_Reviews.tsv',delimiter='\t',quoting=3)
 
@@ -14,12 +23,6 @@ def home():
 @app.route('/sentiment_predict',methods=['GET','POST'])
 def pred():
 	if request.method == 'POST':
-		import re
-		import nltk #For Stop Words i.e the,a,an
-		nltk.download('stopwords')
-		from nltk.corpus import stopwords
-		from nltk.stem.porter import PorterStemmer #to remove conjucation to make all words in present
-		corpus = []
 		for i in range(0,1000):
 		    review = re.sub('[^a-zA-Z]',' ',df['Review'][i]) #cleaned all commaas,stops and all
 		    review = review.lower() #convert all words to lowercase
@@ -72,6 +75,42 @@ def pred():
 		return render_template('sentiment.html',prediction_text='{}'.format(tt))
 	else:
 		return render_template('sentiment.html',prediction_text='{}'.format('Analyzing...'))
+
+@app.route('/summarize')
+def summary():
+	return render_template("text_summarize.html")
+
+@app.route('/summary_predict',methods=['POST'])
+def summarize():
+	raw_text = request.form['Text']
+	stopWords = set(stopwords.words("english"))
+	word_frequencies = {}  
+	for word in nltk.word_tokenize(raw_text):  
+		if word not in stopWords:
+			if word not in word_frequencies.keys():
+				word_frequencies[word] = 1
+			else:
+				word_frequencies[word] += 1
+
+	maximum_frequncy = max(word_frequencies.values())
+	for word in word_frequencies.keys():  
+		word_frequencies[word] = (word_frequencies[word]/maximum_frequncy)
+
+	sentence_list = nltk.sent_tokenize(raw_text)
+	sentence_scores = {}
+	for sent in sentence_list:
+		for word in nltk.word_tokenize(sent.lower()):
+			if word in word_frequencies.keys():
+				if len(sent.split(' ')) < 30:
+					if sent not in sentence_scores.keys():
+						sentence_scores[sent] = word_frequencies[word]
+					else:
+						sentence_scores[sent] += word_frequencies[word]
+
+	summary_sentences = heapq.nlargest(7, sentence_scores, key=sentence_scores.get)
+	summary = ' '.join(summary_sentences)
+	clean_text = summary
+	return render_template('summary_predict.html',prediction_text='{}'.format(clean_text),text='{}'.format(raw_text))
 
 if __name__ == "__main__":
 	app.run(debug=True)
