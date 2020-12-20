@@ -13,7 +13,8 @@
 	<form action="{{url_for('pred') }}" method="POST">
 		<textarea type="text" name="Review" placeholder="Your Review" required="required" /></textarea>
 		<button type="submit" class="btn btn-primary btn-block btn-large">Analyze</button>
-		<a href="{{url_for('home')}}" class="btn btn-primary btn-block btn-large">Back</a>
+		<a href="{{url_for('sentiment')}}" class="btn btn-primary btn-block btn-large">Analyze Again</a>
+		<a href="{{url_for('home')}}" class="btn btn-primary btn-block btn-large">Home</a>
 	</form>
 </div>
 <br>
