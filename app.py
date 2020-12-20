@@ -20,7 +20,11 @@ app = Flask(__name__)
 def home():
 	return render_template('home.html')
 
-@app.route('/sentiment_predict',methods=['GET','POST'])
+@app.route('/sentiment')
+def sentiment():
+	return render_template('sentiment.html')
+
+@app.route('/sentiment/sentiment_predict',methods=['POST'])
 def pred():
 	if request.method == 'POST':
 		for i in range(0,1000):
@@ -35,21 +39,21 @@ def pred():
 		    corpus.append(review)
 
 		from sklearn.feature_extraction.text import CountVectorizer
-		cv = CountVectorizer() #take most frequent Words
+		cv = CountVectorizer(ngram_range=(1,1),max_features=1000) #take most frequent Words
 		X = cv.fit_transform(corpus).toarray()
 		y = df['Liked']
 
-		from sklearn.model_selection import train_test_split
+		#from sklearn.model_selection import train_test_split
 
-		X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.3, random_state=0)
+		#X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.3, random_state=0)
 
-		from sklearn.naive_bayes import GaussianNB
+		#from sklearn.naive_bayes import GaussianNB
 
-		nb = GaussianNB()
+		#nb = GaussianNB()
 
-		nb.fit(X_train,y_train)
+		#nb.fit(X_train,y_train)
 
-		pickle.dump(nb,open('sentiment_model.pkl','wb'))
+		#pickle.dump(nb,open('sentiment_model.pkl','wb'))
 
 		model=pickle.load(open('sentiment_model.pkl','rb'))
 
@@ -70,11 +74,9 @@ def pred():
 		if new_y_pred==1:
 			tt = 'Positive Review'
 		else:
-		    tt= "Negative Review"
+			tt= 'Negative Review'
 
 		return render_template('sentiment.html',prediction_text='{}'.format(tt))
-	else:
-		return render_template('sentiment.html',prediction_text='{}'.format('Analyzing...'))
 
 @app.route('/summarize')
 def summary():
